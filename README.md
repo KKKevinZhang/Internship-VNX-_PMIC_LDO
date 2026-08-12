@@ -1,51 +1,45 @@
-# Ultra-Low Power PMIC LDO Design & Testbench
+# Ultra-Low-Power Dual-Loop PMIC Design Portfolio
 
-This repository contains the full Cadence Virtuoso design files, schematics, netlists, and testbenches for the Power Management Integrated Circuit (PMIC) Low-Dropout (LDO) Regulator module, targeted for ultra-low-power wearable applications (Smart Ring Project).
+Welcome to the design documentation and performance portfolio for a custom Ultra-Low-Power Power Management IC (PMIC). This project was designed and verified during my internship, specifically targeted at space-constrained and battery-sensitive wearable applications (e.g., Smart Rings). 
 
----
-
-## 📌 1. Project Overview & Architecture
-
-The PMIC sub-system is engineered to provide a stable, low-noise power supply ($1.8\text{V}$) from a $3.3\text{V}$ input source. It features a dual-loop architecture enabling deep-sleep operation with ultra-low quiescent current ($I_q \approx 12.5\mu\text{A}$) while delivering high transient response performance during active load states.
-
-### Core Modules Breakdown
-
-*   **`PMIC_tb` (Top-Level Testbench):** 
-    *   The top-level simulation setup used to verify integrated system-level performance, including DC operating points, transient load response, active/sleep power consumption, and Monte Carlo yield analysis.
-*   **`Bandgap` (Bandgap Voltage Reference - BGR):** 
-    *   Generates a stable, temperature-compensated reference voltage ($V_{ref} \approx 1.204\text{V}$) for the error amplifier and internal biasing networks.
-*   **`Error_Amp_for_LDO_pmos` (Error Amplifier):** 
-    *   High-gain, low-power error amplifier designed to drive the main PMOS power transistor and regulate the output voltage against line and load variations.
-*   **`LDO_FVF+SSF` (Flipped Voltage Follower & Super Source Follower):** 
-    *   The primary low-drop-out regulation core incorporating an FVF structure for fast transient load response and enhanced stability without requiring large external decoupling capacitors.
-*   **`LDO_KeepAlive` (Keep-Alive Auxiliary Regulator):** 
-    *   Ultra-low-power auxiliary regulator active during deep-sleep mode (`EN = 0V`) to maintain internal bias nodes and prevent logic state corruption.
+> **🛡️ IP Protection Notice:** 
+> To protect proprietary company intellectual property and PDK data, this repository contains **only architectural documentation, design rationale, and performance analysis reports**. Raw Cadence OpenAccess databases, schematics, and netlists have been strictly excluded.
 
 ---
 
-## 📁 2. File Organization & Contents
-
-Each module subfolder contains the full OpenAccess (OA) database view along with exported simulation assets:
-*   **Circuit Netlists:** Raw SPICE/Spectre netlists (`.scs` / `.cdl`).
-*   **Simulation Data:** Raw wave/DC data and evaluation states.
-*   **Module README:** Detailed individual test cases and specific sub-circuit performance metrics are documented in a dedicated `README.md` within each folder.
+## 📊 System-Level Performance & Full Evaluation
+For the comprehensive evaluation of the integrated system, including Monte Carlo yield analysis, ultra-low deep-sleep quiescent current ($I_q$), load step transient responses, and known engineering trade-offs, **please refer to the top-level testbench report:**
+👉 **[PMIC_tb (Top-Level Testbench)](./PMIC_tb/README.md)**
 
 ---
 
-## 🛠️ 3. Quick Start & Cadence Virtuoso Setup
+## 🧩 Project Architecture & Module Directory
 
-To import and run these designs in your local Cadence Virtuoso environment:
+This PMIC leverages an innovative **Dual-Loop Architecture** to resolve the fundamental conflict between nano-ampere standby power and microsecond-level transient response. The project is modularized into 5 core sub-directories, each detailing the specific design rationale and limit testing for that block:
 
-1.  **Add Library to `cds.lib`:**
-    Directly copy or link the sub-folders (or the parent `PMIC_LDO` directory) into your local Cadence library path. Add the following entry to your project's `cds.lib` file:
-    ```text
-    DEFINE PMIC_LDO ./path_to_repository/PMIC_LDO
-    ```
-2.  **Open Testbench:**
-    Launch Cadence Virtuoso, open `PMIC_LDO -> PMIC_tb -> schematic`, and load the corresponding ADE XL / ADE Assembler state to rerun system-level simulations.
+### 1. `PMIC_tb` (System Integration & Testbench)
+*   **Role:** The top-level verification environment where all sub-modules are integrated.
+*   **Content:** Contains the primary system-level reports, proving the overall functionality, global power consumption, and closed-loop stability across various operational modes (Active vs. Deep Sleep).
+
+### 2. `LDO_FVF+SSF` (Active Power Core)
+*   **Role:** The main Low-Dropout (LDO) regulator power stage active during high-workload states.
+*   **Content:** Details the Flipped Voltage Follower (FVF) and Super Source Follower (SSF) architecture, which achieves gigahertz-level internal bandwidth and ultra-fast transient responses entirely **without external decoupling capacitors**.
+
+### 3. `Error_Amp_for_LDO_pmos` (Active Error Amplifier)
+*   **Role:** The primary control engine driving the FVF power stage.
+*   **Content:** Explores the source-degenerated differential amplifier design. It highlights the strict 20µA current budget limitation, sleep-mode cut-off logic, and how its slew-rate limitations dictate the system's cold-start behavior.
+
+### 4. `LDO_KeepAlive` (Deep Sleep Auxiliary LDO)
+*   **Role:** A dedicated nano-ampere regulator that seamlessly takes over during the system's deep-sleep mode to maintain a 1.8V retention voltage for digital logic.
+*   **Content:** Showcases a minimalist 5-transistor OTA and mega-ohm feedback network designed to burn only **350 nA** of intrinsic quiescent current while remaining unconditionally stable.
+
+### 5. `Bandgap` (Precision Voltage Reference)
+*   **Role:** The "heart" of the PMIC, providing a stable, temperature-compensated 1.2V reference voltage to the error amplifiers.
+*   **Content:** Analyzes the op-amp clamped Bandgap Reference (BGR) architecture, highlighting its startup circuit robustness, loop stability (STB), and excellent Temperature Coefficient (TC) across extreme thermal ranges.
 
 ---
 
-## ⚠️ Note on PDK Requirements
-*   **Process Node:** TSMC 40nm CMOS Technology.
-*   **Models Required:** Make sure your `Model Library Setup` includes statistical models (`top_ttg_localmc` or equivalent) if re-running Monte Carlo mismatch simulations.
+## 🛠️ Tech Stack & Methodologies
+* **Process Node:** TSMC 40nm CMOS Technology
+* **EDA Tools:** Cadence Virtuoso, ADE XL / Assembler
+* **Analysis Performed:** AC (Bode/STB), DC (Sweep/ICMR), Transient (Load Step/Startup), Statistical (Monte Carlo Process & Mismatch).
